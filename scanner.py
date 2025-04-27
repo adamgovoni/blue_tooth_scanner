@@ -11,7 +11,7 @@ from datetime import timedelta
 
 # ---- Flask Settings ----
 app = Flask(__name__, static_folder='static')
-app.secret_key = 'supersecretkey'  # CHANGE before production
+app.secret_key = 'supersecretkey'  # Change this for production!
 app.permanent_session_lifetime = timedelta(minutes=15)
 
 USERNAME = 'admin'
@@ -113,6 +113,21 @@ async def scan_ble_devices_async():
 
 def scan_ble_devices():
     asyncio.run(scan_ble_devices_async())
+
+# ---- Auto-Expire Old Devices ----
+def expire_old_devices():
+    while True:
+        now = datetime.datetime.now()
+        to_remove = []
+        for addr, info in list(devices.items()):
+            last_seen = datetime.datetime.strptime(info['last_seen'], "%Y-%m-%d %H:%M:%S")
+            minutes_inactive = (now - last_seen).total_seconds() / 60
+            if minutes_inactive > 10:
+                print(f"Removing {addr} after {int(minutes_inactive)} minutes idle")
+                to_remove.append(addr)
+        for addr in to_remove:
+            del devices[addr]
+        time.sleep(60)
 
 # ---- Authentication Decorator ----
 def login_required(f):
@@ -223,6 +238,7 @@ HTML_DASHBOARD = """
         header { background-color: #003366; padding: 20px; text-align: center; color: white; }
         h1 { margin: 0; font-size: 2em; }
         #timer { margin-top: 10px; font-size: 14px; color: #ccc; }
+        #device_count { margin-top: 5px; font-size: 18px; color: #ddd; }
         .centered { text-align: center; margin: 20px 0; }
         .button { background-color: #4CAF50; color: white; padding: 10px 24px; margin: 5px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; text-decoration: none; }
         .button.logout { background-color: #f44336; }
@@ -242,6 +258,7 @@ HTML_DASHBOARD = """
 <header>
     <h1>Nearby Bluetooth Devices</h1>
     <div id="timer">Last refreshed 0 seconds ago</div>
+    <div id="device_count">{{ devices|length }} Devices Currently Detected</div>
 </header>
 
 <div class="centered">
@@ -354,6 +371,8 @@ if __name__ == "__main__":
     load_vendors()
     classic_thread = threading.Thread(target=scan_classic_devices, daemon=True)
     ble_thread = threading.Thread(target=scan_ble_devices, daemon=True)
+    expire_thread = threading.Thread(target=expire_old_devices, daemon=True)
     classic_thread.start()
     ble_thread.start()
+    expire_thread.start()
     app.run(host='0.0.0.0', port=5000)
