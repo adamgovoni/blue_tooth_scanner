@@ -1,17 +1,18 @@
 # City of Rochester - Bluetooth Device Scanner
 
 This project is a passive Bluetooth scanning and monitoring tool designed for **authorized city use only**.  
-It detects nearby Bluetooth devices (Classic and BLE), logs detections, and provides a secure web dashboard for viewing and exporting collected data.
+It detects nearby Bluetooth devices (Classic and BLE), logs detections, and provides a secure web dashboard for viewing, exporting, and analyzing collected data.
 
 ---
 
 ## 📡 Features
 
 - Passive Bluetooth device discovery (Classic + BLE)
+- **Live RSSI (Signal Strength) display** for BLE devices
+- Color-coded RSSI to estimate proximity (Green = close, Yellow = medium, Red = far)
 - Vendor identification (based on MAC address prefixes)
-- Live device dashboard (auto-refresh)
 - Secure login required for access
-- Downloadable CSV log of all detections
+- Downloadable CSV log of all detections (including RSSI values)
 - Logout button for session control
 - Session expiration after 15 minutes of inactivity or browser close
 - City of Rochester branding (login page with city logo)

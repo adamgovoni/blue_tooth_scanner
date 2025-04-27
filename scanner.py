@@ -11,7 +11,7 @@ from datetime import timedelta
 
 # ---- Flask Settings ----
 app = Flask(__name__, static_folder='static')
-app.secret_key = 'supersecretkey'  # Change for production!
+app.secret_key = 'supersecretkey'  # Change this for production!
 app.permanent_session_lifetime = timedelta(minutes=15)  # Session timeout
 USERNAME = 'admin'
 PASSWORD = 'bluetooth123'
@@ -124,7 +124,80 @@ def login_required(f):
     return decorated_function
 
 # ---- HTML Pages ----
-HTML_LOGIN = """..."""  # (No changes from previous login page — you can keep it.)
+HTML_LOGIN = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - City of Rochester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #eee;
+        }
+        .login-box {
+            background-color: #2c2c2c;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px #000;
+            text-align: center;
+            width: 300px;
+        }
+        .logo {
+            width: 150px;
+            margin-bottom: 20px;
+        }
+        input[type=text], input[type=password] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0 20px 0;
+            display: inline-block;
+            border: none;
+            background: #3d3d3d;
+            color: #fff;
+            border-radius: 5px;
+        }
+        input[type=submit] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        input[type=submit]:hover {
+            background-color: #45a049;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <img src="/static/COR_logo.png" class="logo" alt="City of Rochester Logo">
+        <h2>Authorized Access Only</h2>
+        <form method="POST">
+            <input name="username" type="text" placeholder="Username" required>
+            <input name="password" type="password" placeholder="Password" required>
+            <input type="submit" value="Login">
+        </form>
+        <div class="footer">
+            Property of City of Rochester
+        </div>
+    </div>
+</body>
+</html>
+"""
 
 HTML_DASHBOARD = """
 <!DOCTYPE html>
