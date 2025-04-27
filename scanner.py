@@ -9,10 +9,10 @@ import os
 import asyncio
 from datetime import timedelta
 
-# ---- Settings ----
-app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # Change this for production!
-app.permanent_session_lifetime = timedelta(minutes=15)  # Session expires after 15 mins
+# ---- Flask Settings ----
+app = Flask(__name__, static_folder='static')
+app.secret_key = 'supersecretkey'  # CHANGE this for production use!
+app.permanent_session_lifetime = timedelta(minutes=15)  # Session timeout
 USERNAME = 'admin'
 PASSWORD = 'bluetooth123'
 
@@ -47,7 +47,7 @@ def log_to_csv(device_type, addr, vendor, name, first_seen, last_seen, hit_count
         writer = csv.writer(file)
         writer.writerow([device_type, addr, vendor, name, first_seen, last_seen, hit_count, time_active])
 
-# ---- Bluetooth Scanning ----
+# ---- Bluetooth Scanning (Classic and BLE) ----
 def scan_classic_devices():
     while True:
         try:
@@ -109,7 +109,7 @@ async def scan_ble_devices_async():
 def scan_ble_devices():
     asyncio.run(scan_ble_devices_async())
 
-# ---- Login Authentication ----
+# ---- Authentication Decorator ----
 def login_required(f):
     from functools import wraps
     @wraps(f)
@@ -119,7 +119,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ---- Web Pages ----
+# ---- HTML Pages ----
 HTML_LOGIN = """
 <!DOCTYPE html>
 <html>
@@ -143,6 +143,10 @@ HTML_LOGIN = """
             box-shadow: 0px 0px 15px #000;
             text-align: center;
             width: 300px;
+        }
+        .logo {
+            width: 150px;
+            margin-bottom: 20px;
         }
         input[type=text], input[type=password] {
             width: 100%;
@@ -176,6 +180,7 @@ HTML_LOGIN = """
 </head>
 <body>
     <div class="login-box">
+        <img src="/static/COR_logo.png" class="logo" alt="City of Rochester Logo">
         <h2>Authorized Access Only</h2>
         <form method="POST">
             <input name="username" type="text" placeholder="Username" required>
@@ -257,13 +262,14 @@ HTML_DASHBOARD = """
 </html>
 """
 
+# ---- Flask Routes ----
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username_attempt = request.form['username']
         password_attempt = request.form['password']
         if username_attempt == USERNAME and password_attempt == PASSWORD:
-            session.permanent = False  # Session expires on browser close
+            session.permanent = False
             session['logged_in'] = True
             return redirect(url_for('index'))
         else:
@@ -288,6 +294,7 @@ def index():
 def download():
     return send_file(LOG_FILE, as_attachment=True)
 
+# ---- Main Execution ----
 if __name__ == "__main__":
     load_vendors()
     classic_thread = threading.Thread(target=scan_classic_devices, daemon=True)
