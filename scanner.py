@@ -11,8 +11,9 @@ from datetime import timedelta
 
 # ---- Flask Settings ----
 app = Flask(__name__, static_folder='static')
-app.secret_key = 'supersecretkey'  # Change this for production!
-app.permanent_session_lifetime = timedelta(minutes=15)  # Session timeout
+app.secret_key = 'supersecretkey'  # CHANGE before production
+app.permanent_session_lifetime = timedelta(minutes=15)
+
 USERNAME = 'admin'
 PASSWORD = 'bluetooth123'
 
@@ -124,162 +125,6 @@ def login_required(f):
     return decorated_function
 
 # ---- HTML Pages ----
-HTML_DASHBOARD = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Bluetooth Surveillance Dashboard</title>
-    <meta http-equiv="refresh" content="15">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f2f5;
-            color: #222;
-        }
-        header {
-            background-color: #003366;
-            padding: 20px;
-            text-align: center;
-            color: white;
-        }
-        h1 {
-            margin: 0;
-            font-size: 2em;
-        }
-        .centered {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 24px;
-            margin: 5px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            text-decoration: none;
-        }
-        .button.logout {
-            background-color: #f44336;
-        }
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
-        }
-        .scroll-table {
-            max-height: 600px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ccc;
-        }
-        th {
-            background-color: #003366;
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-        }
-        tr.classic {
-            background-color: #f9f9f9;
-        }
-        tr.ble {
-            background-color: #e6f0ff;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 12px;
-            color: #666;
-        }
-    </style>
-</head>
-<body>
-
-<header>
-    <h1>Nearby Bluetooth Devices</h1>
-</header>
-
-<div class="centered">
-    <form action="/download" style="display:inline;">
-        <button class="button" type="submit">Download Logs</button>
-    </form>
-    <form action="/logout" style="display:inline;">
-        <button class="button logout" type="submit">Logout</button>
-    </form>
-</div>
-
-<div class="dashboard-container">
-    <div class="scroll-table">
-        <table>
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Name</th>
-                    <th>Vendor</th>
-                    <th>MAC Address</th>
-                    <th>First Seen</th>
-                    <th>Last Seen</th>
-                    <th>Hit Count</th>
-                    <th>Time Active (minutes)</th>
-                    <th>RSSI</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for mac, info in devices.items() %}
-                <tr class="{{ info.type|lower }}">
-                    <td>{{ info.type }}</td>
-                    <td>{{ info.name }}</td>
-                    <td>{{ info.vendor }}</td>
-                    <td>{{ mac }}</td>
-                    <td>{{ info.first_seen }}</td>
-                    <td>{{ info.last_seen }}</td>
-                    <td>{{ info.hit_count }}</td>
-                    <td>{{ info.time_active }}</td>
-                    <td style="color: 
-                        {% if info.rssi != 'N/A' %}
-                            {% if info.rssi > -60 %}
-                                lightgreen
-                            {% elif info.rssi > -80 %}
-                                orange
-                            {% else %}
-                                red
-                            {% endif %}
-                        {% else %}
-                            gray
-                        {% endif %}
-                    ">{{ info.rssi }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="footer">
-    Authorized Use Only - City of Rochester
-</div>
-
-</body>
-</html>
-"""
-
 HTML_LOGIN = """
 <!DOCTYPE html>
 <html>
@@ -355,6 +200,116 @@ HTML_LOGIN = """
 </html>
 """
 
+HTML_DASHBOARD = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bluetooth Surveillance Dashboard</title>
+    <meta http-equiv="refresh" content="15">
+    <script>
+    let startTime = Date.now();
+    function updateTimer() {
+        let now = Date.now();
+        let seconds = Math.floor((now - startTime) / 1000);
+        document.getElementById('timer').innerText = "Last refreshed " + seconds + " seconds ago";
+    }
+    function confirmClear() {
+        return confirm('Are you sure you want to clear the dashboard?');
+    }
+    setInterval(updateTimer, 1000);
+    </script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #222; }
+        header { background-color: #003366; padding: 20px; text-align: center; color: white; }
+        h1 { margin: 0; font-size: 2em; }
+        #timer { margin-top: 10px; font-size: 14px; color: #ccc; }
+        .centered { text-align: center; margin: 20px 0; }
+        .button { background-color: #4CAF50; color: white; padding: 10px 24px; margin: 5px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; text-decoration: none; }
+        .button.logout { background-color: #f44336; }
+        .button.clear { background-color: #ff9800; }
+        .dashboard-container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: white; border-radius: 12px; box-shadow: 0px 0px 10px rgba(0,0,0,0.2); }
+        .scroll-table { max-height: 600px; overflow-y: auto; border: 1px solid #ccc; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ccc; }
+        th { background-color: #003366; color: white; position: sticky; top: 0; z-index: 2; }
+        tr.classic { background-color: #f9f9f9; }
+        tr.ble { background-color: #e6f0ff; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Nearby Bluetooth Devices</h1>
+    <div id="timer">Last refreshed 0 seconds ago</div>
+</header>
+
+<div class="centered">
+    <form action="/download" style="display:inline;">
+        <button class="button" type="submit">Download Logs</button>
+    </form>
+    <form action="/clear" style="display:inline;" onsubmit="return confirmClear();">
+        <button class="button clear" type="submit">Clear Dashboard</button>
+    </form>
+    <form action="/logout" style="display:inline;">
+        <button class="button logout" type="submit">Logout</button>
+    </form>
+</div>
+
+<div class="dashboard-container">
+    <div class="scroll-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Vendor</th>
+                    <th>MAC Address</th>
+                    <th>First Seen</th>
+                    <th>Last Seen</th>
+                    <th>Hit Count</th>
+                    <th>Time Active (minutes)</th>
+                    <th>RSSI</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mac, info in devices.items() %}
+                <tr class="{{ info.type|lower }}">
+                    <td>{{ info.type }}</td>
+                    <td>{{ info.name }}</td>
+                    <td>{{ info.vendor }}</td>
+                    <td>{{ mac }}</td>
+                    <td>{{ info.first_seen }}</td>
+                    <td>{{ info.last_seen }}</td>
+                    <td>{{ info.hit_count }}</td>
+                    <td>{{ info.time_active }}</td>
+                    <td style="color: 
+                        {% if info.rssi != 'N/A' %}
+                            {% if info.rssi > -60 %}
+                                lightgreen
+                            {% elif info.rssi > -80 %}
+                                orange
+                            {% else %}
+                                red
+                            {% endif %}
+                        {% else %}
+                            gray
+                        {% endif %}
+                    ">{{ info.rssi }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="footer">
+    Authorized Use Only - City of Rochester
+</div>
+
+</body>
+</html>
+"""
 
 # ---- Flask Routes ----
 @app.route('/login', methods=['GET', 'POST'])
@@ -387,6 +342,12 @@ def index():
 @login_required
 def download():
     return send_file(LOG_FILE, as_attachment=True)
+
+@app.route('/clear')
+@login_required
+def clear_dashboard():
+    devices.clear()
+    return redirect(url_for('index'))
 
 # ---- Main Execution ----
 if __name__ == "__main__":
